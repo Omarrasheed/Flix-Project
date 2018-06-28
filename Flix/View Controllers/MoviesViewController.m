@@ -8,10 +8,12 @@
 
 #import "MoviesViewController.h"
 #import "MoviesTableViewCell.h"
+#import "DetailViewController.h"
 #import "UIImageView+AFNetworking.h"
 
 @interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate>
 
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingIndicator;
 @property (nonatomic, strong) NSArray *movies;
 @property (weak, nonatomic) IBOutlet UITableView *moviesTableView;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
@@ -27,10 +29,16 @@
     self.moviesTableView.delegate = self;
     self.moviesTableView.dataSource = self;
     
+    // Start the activity indicator
+    [self.loadingIndicator startAnimating];
+    
     [self fetchMovies];
     
     self.refreshControl = [[UIRefreshControl alloc] init];
-    [self.moviesTableView addSubview:self.refreshControl];
+    [self.refreshControl addTarget:self action:@selector(fetchMovies) forControlEvents:UIControlEventValueChanged];
+    NSLog(@"%@", self.moviesTableView.subviews);
+    [self.moviesTableView insertSubview:self.refreshControl atIndex:0];
+    NSLog(@"%@", self.moviesTableView.subviews);
 }
 
 - (void)fetchMovies {
@@ -40,6 +48,7 @@
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error != nil) {
             NSLog(@"%@", [error localizedDescription]);
+            
         }
         else {
             NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
@@ -52,13 +61,13 @@
                 NSLog(@"%@", movie[@"title"]);
                 
             }
+            // Stop the activity indicator
+            // Hides automatically if "Hides When Stopped" is enabled
+            [self.loadingIndicator stopAnimating];
+            [self.moviesTableView reloadData];
             
-            self.moviesTableView.reloadData;
-            
-            // TODO: Get the array of movies
-            // TODO: Store the movies in a property to use elsewhere
-            // TODO: Reload your table view data
         }
+        [self.refreshControl endRefreshing];
     }];
     [task resume];
 }
@@ -91,14 +100,21 @@
     return cell;
 }
 
-/*
+
 #pragma mark - Navigation
 
 // In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    
+    UITableViewCell *tappedCell = sender;
+    NSIndexPath *indexPath = [self.moviesTableView indexPathForCell:tappedCell];
+    NSDictionary *movie = self.movies[indexPath.row];
+    
+    DetailViewController *detailViewController = [segue destinationViewController];
+    detailViewController.movie = movie;
     // Get the new view controller using [segue destinationViewController].
     // Pass the selected object to the new view controller.
 }
-*/
+
 
 @end
