@@ -14,7 +14,7 @@
 @interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate>
 
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingIndicator;
-@property (nonatomic, strong) NSArray *movies;
+@property (nonatomic, strong) NSMutableArray *movies;
 @property (weak, nonatomic) IBOutlet UITableView *moviesTableView;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 
@@ -36,9 +36,7 @@
     
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(fetchMovies) forControlEvents:UIControlEventValueChanged];
-    NSLog(@"%@", self.moviesTableView.subviews);
     [self.moviesTableView insertSubview:self.refreshControl atIndex:0];
-    NSLog(@"%@", self.moviesTableView.subviews);
 }
 
 - (void)fetchMovies {
@@ -48,19 +46,41 @@
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error != nil) {
             NSLog(@"%@", [error localizedDescription]);
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Error"
+                                                                           message:@"Could not retrieve movies from server"
+                                                                    preferredStyle:(UIAlertControllerStyleAlert)];
+            // create a cancel action
+            UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                                                   style:UIAlertActionStyleCancel
+                                                                 handler:^(UIAlertAction * _Nonnull action) {
+                                                                     // handle cancel response here. Doing nothing will dismiss the view.
+                                                                 }];
+            // add the cancel action to the alertController
+            [alert addAction:cancelAction];
             
+            // create an OK action
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:^(UIAlertAction * _Nonnull action) {
+                                                                 [self.refreshControl endRefreshing];
+                                                                 // handle response here.
+                                                             }];
+            // add the OK action to the alert controller
+            [alert addAction:okAction];
+            
+            [self presentViewController:alert animated:YES completion:^{
+                // optional code for what happens after the alert controller has finished presenting
+            }];
+            [self.movies removeAllObjects];
+            [self.moviesTableView reloadData];
+            
+            [self.loadingIndicator stopAnimating];
         }
         else {
             NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
             
-            NSLog(@"%@", dataDictionary);
-            
             self.movies = dataDictionary[@"results"];
             
-            for (NSDictionary *movie in self.movies) {
-                NSLog(@"%@", movie[@"title"]);
-                
-            }
             // Stop the activity indicator
             // Hides automatically if "Hides When Stopped" is enabled
             [self.loadingIndicator stopAnimating];
