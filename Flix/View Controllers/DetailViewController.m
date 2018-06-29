@@ -31,7 +31,7 @@
     [self.movieImageView setImageWithURL:imageURL];
     
     NSString *backdropImageURLString = self.movie[@"backdrop_path"];
-    NSString *fullBackdropURLString = [baseURLString stringByAppendingString:imageURLString];
+    NSString *fullBackdropURLString = [baseURLString stringByAppendingString:backdropImageURLString];
     
     NSURL *backdropImageURL = [NSURL URLWithString:fullBackdropURLString];
     [self.backdropImageView setImageWithURL:backdropImageURL];

@@ -40,7 +40,7 @@
 }
 
 - (void)fetchMovies {
-    NSURL *url = [NSURL URLWithString:@"https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed"];
+    NSURL *url = [NSURL URLWithString:@"https://api.themoviedb.org/3/discover/movie?&api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed"];
     NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
     NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -110,12 +110,14 @@
     
     NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
     NSString *imageURLString = movie[@"poster_path"];
-    NSString *fullURLString = [baseURLString stringByAppendingString:imageURLString];
+    if (![movie[@"poster_path"] isEqual:[NSNull null]]) {
+        NSString *fullURLString = [baseURLString stringByAppendingString:imageURLString];
     
-    NSURL *imageURL = [NSURL URLWithString:fullURLString];
+        NSURL *imageURL = [NSURL URLWithString:fullURLString];
     
-    cell.movieImage.image = nil;
-    [cell.movieImage setImageWithURL:imageURL];
+        cell.movieImage.image = nil;
+        [cell.movieImage setImageWithURL:imageURL];
+    };
     
     return cell;
 }
