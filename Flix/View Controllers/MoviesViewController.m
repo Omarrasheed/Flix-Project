@@ -119,6 +119,8 @@
         [cell.movieImage setImageWithURL:imageURL];
     };
     
+    [cell.movieDescription sizeToFit];
+    
     return cell;
 }
 

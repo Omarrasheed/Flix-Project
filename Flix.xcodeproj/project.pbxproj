@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		22337C5720E5E93200688263 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22337C5620E5E93200688263 /* WebKit.framework */; };
+		22337C5A20E5E99300688263 /* WebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22337C5920E5E99300688263 /* WebViewController.m */; };
 		22449B2D20E40375007BB8E4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 22449B2C20E40375007BB8E4 /* AppDelegate.m */; };
 		22449B3320E40375007BB8E4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 22449B3120E40375007BB8E4 /* Main.storyboard */; };
 		22449B3620E40375007BB8E4 /* Flix.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 22449B3420E40375007BB8E4 /* Flix.xcdatamodeld */; };
@@ -22,6 +24,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		22337C5620E5E93200688263 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		22337C5820E5E99300688263 /* WebViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebViewController.h; sourceTree = "<group>"; };
+		22337C5920E5E99300688263 /* WebViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WebViewController.m; sourceTree = "<group>"; };
 		22449B2820E40375007BB8E4 /* Flix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Flix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		22449B2B20E40375007BB8E4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		22449B2C20E40375007BB8E4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -51,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22337C5720E5E93200688263 /* WebKit.framework in Frameworks */,
 				B919185AAEA06956841510B0 /* libPods-Flix.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -103,6 +109,8 @@
 				22449B7920E4646C007BB8E4 /* DetailViewController.m */,
 				22C126B620E599610090CFBE /* MoviesGridViewController.h */,
 				22C126B720E599610090CFBE /* MoviesGridViewController.m */,
+				22337C5820E5E99300688263 /* WebViewController.h */,
+				22337C5920E5E99300688263 /* WebViewController.m */,
 			);
 			path = "View Controllers";
 			sourceTree = "<group>";
@@ -137,6 +145,7 @@
 		BE88899F5CED70868B86C368 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				22337C5620E5E93200688263 /* WebKit.framework */,
 				E02B0B307C2B3789640A01C6 /* libPods-Flix.a */,
 			);
 			name = Frameworks;
@@ -238,6 +247,7 @@
 				22449B4620E411F0007BB8E4 /* MoviesViewController.m in Sources */,
 				22449B7720E44CBD007BB8E4 /* MoviesTableViewCell.m in Sources */,
 				22449B3E20E40375007BB8E4 /* main.m in Sources */,
+				22337C5A20E5E99300688263 /* WebViewController.m in Sources */,
 				22C126BB20E59AAE0090CFBE /* MovieCollectionCell.m in Sources */,
 				22449B2D20E40375007BB8E4 /* AppDelegate.m in Sources */,
 				22449B7A20E4646C007BB8E4 /* DetailViewController.m in Sources */,
