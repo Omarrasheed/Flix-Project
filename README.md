@@ -38,7 +38,7 @@ Please list two areas of the assignment you'd like to **discuss further with you
 
 Here's a walkthrough of implemented user stories:
 
-<blockquote class="imgur-embed-pub" lang="en" data-id="a/0cDT0KX"><a href="//imgur.com/0cDT0KX">Flix </a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>
+![Demo](Gif-Flix.gif)
 
 GIF created with [LiceCap](http://www.cockos.com/licecap/).
 
