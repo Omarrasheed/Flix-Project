@@ -15,13 +15,13 @@
 @interface MoviesGridViewController () <UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate>
 
 @property (nonatomic, strong) NSArray *movies;
+@property (nonatomic, strong) NSArray *worstMovies;
 @property (nonatomic, strong) NSArray *searchedMovies;
 @property (strong, nonatomic) NSArray *groups;
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (strong, nonatomic) NSArray *filteredData;
 @property (weak, nonatomic) IBOutlet UISearchBar *searchBar;
 @property (nonatomic, strong) UIRefreshControl *collectionRefreshControl;
-@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
 @property NSInteger *sectionCount;
 
 @end
@@ -45,14 +45,12 @@
     self.collectionView.delegate = self;
     self.searchBar.delegate = self;
     
-    [self.activityIndicator startAnimating];
-    
     self.collectionRefreshControl = [[UIRefreshControl alloc] init];
     [self.collectionRefreshControl addTarget:self action:@selector(fetchMovies) forControlEvents:UIControlEventValueChanged];
     
     [self.collectionView insertSubview:self.collectionRefreshControl atIndex:0];
     
-    [self fetchMovies];
+    [self fetchBestMovies];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -67,7 +65,7 @@
     
     UICollectionViewCell *tappedCell = sender;
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:tappedCell];
-    NSDictionary *movie = self.movies[indexPath.row];
+    NSDictionary *movie = self.filteredData[indexPath.row];
     
     DetailViewController *detailViewController = [segue destinationViewController];
     detailViewController.movie = movie;
@@ -76,8 +74,30 @@
 }
 
 
-- (void)fetchMovies {
+- (void)fetchBestMovies {
     NSURL *url = [NSURL URLWithString:@"https://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed"];
+    NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (error != nil) {
+            NSLog(@"%@", [error localizedDescription]);
+        }
+        else {
+            
+            NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+            
+            self.movies = dataDictionary[@"results"];
+            self.filteredData = self.movies;
+            self.searchedMovies = self.filteredData;
+            [self fetchWorstMovies];
+        }
+        [self.collectionRefreshControl endRefreshing];
+    }];
+    [task resume];
+}
+
+- (void)fetchWorstMovies {
+    NSURL *url = [NSURL URLWithString:@"https://api.themoviedb.org/3/discover/movie?sort_by=popularity.asc&api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed"];
     NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
     NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -87,9 +107,9 @@
         else {
             NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
             
-            self.movies = dataDictionary[@"results"];
-            self.filteredData = self.movies;
-            [self.activityIndicator stopAnimating];
+            self.worstMovies = dataDictionary[@"results"];
+            
+            
             [self.collectionView reloadData];
         }
         [self.collectionRefreshControl endRefreshing];
@@ -100,15 +120,29 @@
 - (nonnull __kindof UICollectionViewCell *)collectionView:(nonnull UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
     MovieCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MovieCollectionCell" forIndexPath:indexPath];
     
-    NSDictionary *movie = self.filteredData[indexPath.item];
+    if (indexPath.section == (NSInteger *)0) {
     
-    NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
-    NSString *imageURLString = movie[@"poster_path"];
-    if (![movie[@"poster_path"] isEqual:[NSNull null]]) {
-        NSString *fullURLString = [baseURLString stringByAppendingString:imageURLString];
-        NSURL *imageURL = [NSURL URLWithString:fullURLString];
-        cell.posterView.image = nil;
-        [cell.posterView setImageWithURL:imageURL];
+        NSDictionary *movie = self.filteredData[indexPath.item];
+        
+        NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
+        NSString *imageURLString = movie[@"poster_path"];
+        if (![movie[@"poster_path"] isEqual:[NSNull null]]) {
+            NSString *fullURLString = [baseURLString stringByAppendingString:imageURLString];
+            NSURL *imageURL = [NSURL URLWithString:fullURLString];
+            cell.posterView.image = nil;
+            [cell.posterView setImageWithURL:imageURL];
+        }
+    } else {
+        NSDictionary *movie = self.worstMovies[indexPath.item];
+        
+        NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
+        NSString *imageURLString = movie[@"poster_path"];
+        if (![movie[@"poster_path"] isEqual:[NSNull null]]) {
+            NSString *fullURLString = [baseURLString stringByAppendingString:imageURLString];
+            NSURL *imageURL = [NSURL URLWithString:fullURLString];
+            cell.posterView.image = nil;
+            [cell.posterView setImageWithURL:imageURL];
+        }
     }
     return cell;
 }
@@ -125,56 +159,47 @@
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
     
     if (searchText.length != 0) {
-        self.sectionCount = (NSInteger *)1;
-        NSString *beginningOfAPI = [NSString stringWithFormat:(@"https://api.themoviedb.org/3/search/movie?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed&query=")];
-        
-        NSString *realSearchText = [[searchText stringByReplacingOccurrencesOfString:@" " withString:([@"%" stringByAppendingString:[NSString stringWithFormat:(@"20")]])] stringByReplacingOccurrencesOfString:[NSString stringWithFormat:([@"%" stringByAppendingString:[NSString stringWithFormat:(@"20")]])] withString:[NSString stringWithFormat:@""]];
-        
-        NSString *middleOfAPI = [beginningOfAPI stringByAppendingString:(realSearchText)];
-        
-        NSString *finalAPIString = [middleOfAPI stringByAppendingString:[NSString stringWithFormat:@"&language=en-US&page=1"]];
-        
-        NSURL *searchAPIString =[NSURL URLWithString:finalAPIString];
-        
-        NSURLRequest *request = [NSURLRequest requestWithURL:searchAPIString cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
-        NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
-        NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-            if (error != nil) {
-                NSLog(@"%@", [error localizedDescription]);
-            }
-            else {
-                NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
-                
-                self.searchedMovies = dataDictionary[@"results"];
-                
-                NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(NSDictionary *evaluatedObject, NSDictionary *bindings) {
-                    return [evaluatedObject[@"title"] containsString:searchText];
-                }];
-                self.filteredData = [self.searchedMovies filteredArrayUsingPredicate:predicate];
-                
-                NSLog(@"%@", self.filteredData);
-                
-                [self.collectionView reloadData];
-            }
-        }];
-        [task resume];
-        
-        NSPredicate *predicate = [NSPredicate predicateWithBlock:^BOOL(NSDictionary *evaluatedObject, NSDictionary *bindings) {
-            return [evaluatedObject[@"title"] containsString:searchText];
-        }];
-        self.filteredData = [self.searchedMovies filteredArrayUsingPredicate:predicate];
-        
-        NSLog(@"%@", self.filteredData);
-        
+        if (searchText == @"") {
+            self.filteredData = self.movies;
+        } else {
+            self.sectionCount = (NSInteger *)1;
+            NSString *beginningOfAPI = [NSString stringWithFormat:(@"https://api.themoviedb.org/3/search/movie?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed&language=en-US&query=")];
+            
+            NSString *firstSearchFilter = [searchText stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
+            
+            NSString *middleOfAPI = [beginningOfAPI stringByAppendingString:(firstSearchFilter)];
+            
+            NSURL *searchAPIString =[NSURL URLWithString:middleOfAPI];
+            
+            NSURLRequest *request = [NSURLRequest requestWithURL:searchAPIString cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
+            NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
+            NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                if (error != nil) {
+                    NSLog(@"%@", [error localizedDescription]);
+                }
+                else {
+                    NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+                    
+                    self.searchedMovies = dataDictionary[@"results"];
+
+                    self.filteredData = self.searchedMovies;
+                    
+                    NSLog(@"%@", self.filteredData);
+                    
+                    [self.collectionView reloadData];
+                }
+                [self.collectionRefreshControl endRefreshing];
+            }];
+            [task resume];
+            NSLog(@"%@", self.filteredData);
+        }
     }
     else {
         self.sectionCount = (NSInteger *)2;
         self.filteredData = self.movies;
+        self.searchedMovies = self.movies;
         [self.collectionView reloadData];
     }
-    
-    
-    
 }
 
 - (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar {
@@ -185,6 +210,8 @@
     self.searchBar.showsCancelButton = NO;
     self.searchBar.text = @"";
     [self.searchBar resignFirstResponder];
+    self.filteredData = self.movies;
+    [self.collectionView reloadData];
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
